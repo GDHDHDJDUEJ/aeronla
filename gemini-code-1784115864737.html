@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Misi 4: Hero Kebersihan</title>
+    <style>
+        /* ==================================================
+           GLOBAL CSS & 3D PIXAR-INSPIRED STYLING
+           ================================================== */
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap');
+
+        :root {
+            --bg-sunny: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 100%);
+            --bg-dark: linear-gradient(to bottom, #4A0E4E 0%, #2B0830 100%);
+            --primary: #FF7E67;
+            --secondary: #63C5DA;
+            --success: #66CC66;
+            --danger: #FF4D4D;
+            --yellow: #FFD166;
+            --white: #FFFFFF;
+            --shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+            --inner-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+            background: var(--bg-sunny);
+            color: #333;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Fredoka One', cursive;
+            margin: 0 0 15px 0;
+            color: var(--white);
+            text-shadow: 2px 2px 0 #333, -1px -1px 0 #333, 1px -1px 0 #333, -1px 1px 0 #333, 0 4px 10px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        p {
+            font-size: 1.2rem;
+            text-align: center;
+            line-height: 1.5;
+            font-weight: 700;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            height: 100%;
+            max-height: 600px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border-radius: 30px;
+            overflow: hidden;
+            border: 4px solid rgba(255, 255, 255, 0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* Top Bar for HUD */
+        #hud {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 100;
+            pointer-events: none;
+            display: none;
+        }
+        .hud-badge {
+            background: var(--white);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-family: 'Fredoka One', cursive;
+            color: #333;
+            box-shadow: var(--shadow);
+            border: 3px solid var(--yellow);
+            pointer-events: auto;
+        }
+        
+        #mute-btn {
+            background: var(--secondary);
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: var(--shadow), var(--inner-shadow);
+            pointer-events: auto;
+            transition: transform 0.1s;
+        }
+        #mute-btn:active { transform: scale(0.95); }
+
+        /* Buttons */
+        .btn {
+            background: var(--primary);
+            color: var(--white);
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.3rem;
+            font-family: 'Fredoka One', cursive;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: var(--shadow), inset 0 -5px 0 rgba(0,0,0,0.2);
+            transition: transform 0.1s, background 0.2s;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn:hover { background: #ff644a; transform: translateY(-2px); }
+        .btn:active { transform: translateY(3px); box-shadow: 0 3px 5px rgba(0,0,0,0.2), inset 0 -2px 0 rgba(0,0,0,0.2); }
+        .btn-green { background: var(--success); }
+        .btn-green:hover { background: #55b855; }
+
+        /* Story Screen */
+        .story-box {
+            background: var(--white);
+            padding: 20px;
+            border-radius: 20px;
+            border: 4px solid var(--secondary);
+            max-width: 90%;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .emoji-big { font-size: 5rem; margin: 10px; animation: bounce 2s infinite; }
+
+        /* Game 1: Sorting */
+        .g1-container {
+            display: flex;
+            width: 100%;
+            height: 70%;
+            gap: 15px;
+        }
+        .slots-col, .items-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        .slot {
+            background: rgba(255,255,255,0.4);
+            border: 3px dashed var(--white);
+            border-radius: 15px;
+            padding: 10px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+            color: #333;
+        }
+        .draggable {
+            background: var(--white);
+            border-radius: 15px;
+            padding: 12px;
+            box-shadow: var(--shadow), var(--inner-shadow);
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.95rem;
+            border: 3px solid var(--secondary);
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+        }
+        .draggable.selected {
+            transform: scale(1.05);
+            border-color: var(--yellow);
+            background: #fff9e6;
+        }
+        .slot.filled {
+            background: var(--success);
+            border-style: solid;
+            color: white;
+            box-shadow: 0 0 15px var(--success);
+            animation: glow 1s;
+        }
+
+        /* Game 2: Tap */
+        #game2-area {
+            position: relative;
+            width: 100%;
+            height: 60%;
+            background: rgba(255,255,255,0.3);
+            border-radius: 20px;
+            border: 4px solid var(--secondary);
+            overflow: hidden;
+            cursor: crosshair;
+        }
+        .target-item {
+            position: absolute;
+            font-size: 3.5rem;
+            cursor: pointer;
+            transition: transform 0.1s;
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.3));
+        }
+        .target-item:active { transform: scale(0.8); }
+
+        /* Game 3: Quiz */
+        .quiz-card {
+            background: var(--white);
+            border-radius: 25px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            border: 5px solid var(--secondary);
+            width: 90%;
+        }
+        .quiz-img { font-size: 6rem; margin-bottom: 10px; }
+        .quiz-btn-group { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
+
+        /* Overlays & Animations */
+        #message-overlay {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 20px;
+            font-family: 'Fredoka One';
+            font-size: 1.5rem;
+            z-index: 200;
+            display: none;
+            text-align: center;
+            border: 4px solid var(--yellow);
+        }
+
+        .bubble {
+            position: absolute;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(200,230,255,0.4) 50%, rgba(255,255,255,0) 70%);
+            border: 1px solid rgba(255,255,255,0.6);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: floatUp linear forwards;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: red;
+            animation: fall linear forwards;
+        }
+
+        /* Keyframes */
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+        @keyframes glow { 0% { box-shadow: 0 0 5px var(--success); } 50% { box-shadow: 0 0 25px var(--success); } 100% { box-shadow: 0 0 10px var(--success); } }
+        @keyframes floatUp { 0% { transform: translateY(0) scale(0.5); opacity: 1; } 100% { transform: translateY(-100vh) scale(1.5); opacity: 0; } }
+        @keyframes fall { 0% { transform: translateY(-20px) rotate(0deg); opacity: 1;} 100% { transform: translateY(100vh) rotate(360deg); opacity: 0;} }
+        @keyframes pop { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }
+
+        .anim-shake { animation: shake 0.4s; }
+        .anim-pop { animation: pop 0.3s forwards; }
+
+        /* Certificate */
+        .certificate {
+            background: #FFFAFA;
+            border: 8px solid var(--yellow);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 90%;
+        }
+        
+        /* Dark Theme Class for Ending */
+        .theme-dark {
+            background: var(--bg-dark) !important;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Background Bubbles Container -->
+    <div id="bubbles-bg"></div>
+
+    <div id="game-container">
+        
+        <!-- HUD Overlay -->
+        <div id="hud">
+            <div class="hud-badge">⭐ <span id="score-display">0</span></div>
+            <button id="mute-btn">🔊</button>
+        </div>
+
+        <!-- SCREEN 0: Main Menu -->
+        <div id="screen-0" class="screen active">
+            <div class="emoji-big">🧼🦠🦸‍♂️</div>
+            <h1>Misi 4: Hero Kebersihan</h1>
+            <p style="background: white; padding: 10px 20px; border-radius: 20px; border:3px solid var(--secondary);">Bantu Amir Mengalahkan Kuman!</p>
+            <button class="btn btn-green" onclick="startGame()">Mula Bermain!</button>
+        </div>
+
+        <!-- SCREEN 1: Story -->
+        <div id="screen-1" class="screen">
+            <div class="story-box">
+                <div id="story-emoji" class="emoji-big">🏃🏽‍♂️</div>
+                <h2 id="story-title">Amir bermain di taman...</h2>
+                <p id="story-text">Selepas itu, dia terus makan tanpa membasuh tangan.</p>
+            </div>
+            <button class="btn" id="story-btn" onclick="nextStory()">Seterusnya ➡️</button>
+        </div>
+
+        <!-- SCREEN 2: Game 1 (Sorting) -->
+        <div id="screen-2" class="screen">
+            <h2>🧼 Susun 7 Langkah Mencuci Tangan</h2>
+            <p style="font-size:0.9rem; margin:0 0 10px 0;">*Sentuh pilihan di kanan, kemudian sentuh kotak yang betul di kiri.</p>
+            <div class="g1-container">
+                <div class="slots-col" id="g1-slots"></div>
+                <div class="items-col" id="g1-items"></div>
+            </div>
+        </div>
+
+        <!-- SCREEN 3: Game 2 (Tap) -->
+        <div id="screen-3" class="screen">
+            <h2>🦠 Musnahkan Kuman!</h2>
+            <p>Sentuh kuman (🦠) & Sabun (🧼)! Jangan sentuh burger kotor (🍔)!</p>
+            <div id="game2-area"></div>
+            <h3 style="margin-top:10px;">Masa: <span id="g2-time">15</span>s</h3>
+        </div>
+
+        <!-- SCREEN 4: Game 3 (Quiz) -->
+        <div id="screen-4" class="screen">
+            <h2>🖐 Bila Perlu Basuh Tangan?</h2>
+            <div class="quiz-card" id="quiz-card">
+                <div class="quiz-img" id="quiz-img">🍽</div>
+                <h3 id="quiz-text" style="color: #333; text-shadow: none;">Sebelum makan</h3>
+                <div class="quiz-btn-group">
+                    <button class="btn btn-green" onclick="checkQuiz(true)">✅ Basuh Tangan</button>
+                    <button class="btn" style="background:var(--danger);" onclick="checkQuiz(false)">❌ Tidak Perlu</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 5: Ending -->
+        <div id="screen-5" class="screen">
+            <div class="certificate">
+                <div class="emoji-big" id="end-emoji">😁</div>
+                <h1 style="color:#FF7E67; text-shadow: none;">🏅 CLEAN HERO</h1>
+                <p><b>Tahniah!</b><br>Anda berjaya membantu Amir mengalahkan semua kuman!</p>
+                <h3 style="color: #333; text-shadow: none;">Markah Akhir: ⭐ <span id="final-score"></span></h3>
+                <button class="btn btn-green" onclick="location.reload()">Main Semula</button>
+            </div>
+        </div>
+
+        <!-- Overlay Message -->
+        <div id="message-overlay"></div>
+    </div>
+
+    <script>
+        /* ==================================================
+           AUDIO ENGINE (Web Audio API)
+           ================================================== */
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+        let isMuted = false;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playTone(freq, type, duration, vol=0.1) {
+            if (!audioCtx || isMuted) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function sfxCorrect() {
+            playTone(523.25, 'sine', 0.1, 0.1); // C5
+            setTimeout(() => playTone(659.25, 'sine', 0.2, 0.15), 100); // E5
+        }
+
+        function sfxWrong() {
+            playTone(200, 'sawtooth', 0.3, 0.1);
+        }
+
+        function sfxPop() {
+            playTone(800, 'sine', 0.1, 0.1);
+            setTimeout(() => playTone(1200, 'sine', 0.1, 0.05), 50);
+        }
+
+        function sfxVictory() {
+            if(isMuted) return;
+            let notes = [523.25, 659.25, 783.99, 1046.50]; // C, E, G, C high
+            notes.forEach((n, i) => {
+                setTimeout(() => playTone(n, 'triangle', 0.3, 0.1), i * 150);
+            });
+        }
+
+        // Mute button logic
+        document.getElementById('mute-btn').addEventListener('click', () => {
+            isMuted = !isMuted;
+            document.getElementById('mute-btn').innerText = isMuted ? '🔇' : '🔊';
+        });
+
+
+        /* ==================================================
+           GAME STATE & UTILS
+           ================================================== */
+        let score = 0;
+        let currentScreen = 0;
+
+        function addScore(points) {
+            score += points;
+            document.getElementById('score-display').innerText = score;
+        }
+
+        function switchScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(`screen-${id}`).classList.add('active');
+            if(id > 0 && id < 5) document.getElementById('hud').style.display = 'flex';
+            else document.getElementById('hud').style.display = 'none';
+        }
+
+        function showMessage(text, isGood) {
+            const msg = document.getElementById('message-overlay');
+            msg.innerText = text;
+            msg.style.display = 'block';
+            msg.style.borderColor = isGood ? 'var(--success)' : 'var(--danger)';
+            setTimeout(() => { msg.style.display = 'none'; }, 1500);
+        }
+
+        /* Visual Effects */
+        function createSparkles(x, y) {
+            for(let i=0; i<5; i++) {
+                let s = document.createElement('div');
+                s.innerText = '✨';
+                s.style.position = 'absolute';
+                s.style.left = x + 'px';
+                s.style.top = y + 'px';
+                s.style.transition = 'all 0.5s';
+                s.style.pointerEvents = 'none';
+                s.style.zIndex = 300;
+                document.body.appendChild(s);
+                
+                setTimeout(() => {
+                    s.style.transform = `translate(${(Math.random()-0.5)*100}px, ${(Math.random()-0.5)*100}px) scale(1.5)`;
+                    s.style.opacity = '0';
+                }, 10);
+                setTimeout(() => s.remove(), 500);
+            }
+        }
+
+        function startBubblesBg() {
+            setInterval(() => {
+                const b = document.createElement('div');
+                b.className = 'bubble';
+                let size = Math.random() * 40 + 10;
+                b.style.width = size + 'px';
+                b.style.height = size + 'px';
+                b.style.left = Math.random() * 100 + 'vw';
+                b.style.bottom = '-50px';
+                b.style.animationDuration = (Math.random() * 5 + 4) + 's';
+                document.getElementById('bubbles-bg').appendChild(b);
+                setTimeout(() => b.remove(), 9000);
+            }, 800);
+        }
+
+        /* ==================================================
+           SCREENS LOGIC
+           ================================================== */
+        
+        // Start Game
+        function startGame() {
+            initAudio();
+            startBubblesBg();
+            switchScreen(1);
+        }
+
+        // Story Logic
+        let storyStep = 0;
+        function nextStory() {
+            initAudio(); // ensure audio is active
+            const title = document.getElementById('story-title');
+            const text = document.getElementById('story-text');
+            const emoji = document.getElementById('story-emoji');
+            const btn = document.getElementById('story-btn');
+
+            if(storyStep === 0) {
+                emoji.innerText = '🤢';
+                title.innerText = 'Oh tidak! Amir sakit perut.';
+                text.innerText = 'Guru memberitahu bahawa tangan Amir dipenuhi dengan kuman kerana tidak membasuh tangan.';
+                btn.innerText = 'Bantu Amir! 🦸‍♂️';
+                storyStep++;
+            } else {
+                setupGame1();
+            }
+        }
+
+        // --- GAME 1: Sorting 7 Steps ---
+        const stepsData = [
+            { id: 1, text: "Basahkan tangan dengan air." },
+            { id: 2, text: "Letakkan sabun." },
+            { id: 3, text: "Gosok tapak tangan." },
+            { id: 4, text: "Gosok belakang tangan." },
+            { id: 5, text: "Gosok celah jari." },
+            { id: 6, text: "Bilas dengan air bersih." },
+            { id: 7, text: "Lap tangan hingga kering." }
+        ];
+        let g1CurrentSlot = 1;
+        let selectedItem = null;
+
+        function setupGame1() {
+            switchScreen(2);
+            const slotsContainer = document.getElementById('g1-slots');
+            const itemsContainer = document.getElementById('g1-items');
+            slotsContainer.innerHTML = '';
+            itemsContainer.innerHTML = '';
+
+            // Create slots
+            for(let i=1; i<=7; i++) {
+                let slot = document.createElement('div');
+                slot.className = 'slot';
+                slot.id = `slot-${i}`;
+                slot.innerText = `${i}. (Pilih langkah)`;
+                slot.onclick = () => handleSlotClick(i);
+                slotsContainer.appendChild(slot);
+            }
+
+            // Shuffle and create items
+            let shuffled = [...stepsData].sort(() => Math.random() - 0.5);
+            shuffled.forEach(item => {
+                let div = document.createElement('div');
+                div.className = 'draggable';
+                div.innerText = item.text;
+                div.dataset.id = item.id;
+                div.onclick = (e) => handleItemSelect(e, div, item);
+                itemsContainer.appendChild(div);
+            });
+        }
+
+        function handleItemSelect(e, el, item) {
+            document.querySelectorAll('.draggable').forEach(d => d.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedItem = { el, item };
+        }
+
+        function handleSlotClick(slotNum) {
+            if(!selectedItem) return;
+            if(slotNum !== g1CurrentSlot) return; // Must fill in order
+
+            if(selectedItem.item.id === slotNum) {
+                // Correct
+                sfxCorrect();
+                addScore(10);
+                let slot = document.getElementById(`slot-${slotNum}`);
+                slot.classList.add('filled');
+                slot.innerText = `${slotNum}. ${selectedItem.item.text}`;
+                
+                let rect = slot.getBoundingClientRect();
+                createSparkles(rect.left + rect.width/2, rect.top + rect.height/2);
+                
+                showMessage("Bagus! Langkah ini betul!", true);
+                selectedItem.el.remove();
+                selectedItem = null;
+                g1CurrentSlot++;
+
+                if(g1CurrentSlot > 7) {
+                    setTimeout(setupGame2, 2000);
+                }
+            } else {
+                // Wrong
+                sfxWrong();
+                showMessage("Cuba lagi!", false);
+                const container = document.getElementById('screen-2');
+                container.classList.add('anim-shake');
+                setTimeout(() => container.classList.remove('anim-shake'), 400);
+            }
+        }
+
+
+        // --- GAME 2: Tap Germs ---
+        let g2Interval, g2Timer;
+        let g2TimeLeft = 15;
+
+        function setupGame2() {
+            switchScreen(3);
+            g2TimeLeft = 15;
+            document.getElementById('g2-time').innerText = g2TimeLeft;
+            const area = document.getElementById('game2-area');
+            area.innerHTML = '';
+            
+            // Start spawn interval
+            g2Interval = setInterval(spawnTarget, 700);
+            
+            // Start countdown
+            g2Timer = setInterval(() => {
+                g2TimeLeft--;
+                document.getElementById('g2-time').innerText = g2TimeLeft;
+                if(g2TimeLeft <= 0) {
+                    clearInterval(g2Interval);
+                    clearInterval(g2Timer);
+                    area.innerHTML = ''; // clear remaining
+                    showMessage("Masa Tamat!", true);
+                    setTimeout(setupGame3, 2000);
+                }
+            }, 1000);
+        }
+
+        function spawnTarget() {
+            const area = document.getElementById('game2-area');
+            const types = [
+                { icon: '🦠', type: 'germ', pts: 5 },
+                { icon: '🦠', type: 'germ', pts: 5 },
+                { icon: '🧼', type: 'soap', pts: 20 },
+                { icon: '🍔', type: 'bad', pts: 0 } // distractor
+            ];
+            
+            let t = types[Math.floor(Math.random() * types.length)];
+            let el = document.createElement('div');
+            el.className = 'target-item';
+            el.innerText = t.icon;
+            
+            // Random position
+            let x = Math.random() * (area.clientWidth - 60);
+            let y = Math.random() * (area.clientHeight - 60);
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            
+            el.onmousedown = (e) => hitTarget(e, el, t);
+            el.ontouchstart = (e) => { e.preventDefault(); hitTarget(e, el, t); };
+            
+            area.appendChild(el);
+            
+            // Auto remove after 1.5s
+            setTimeout(() => { if(el.parentElement) el.remove(); }, 1500);
+        }
+
+        function hitTarget(e, el, data) {
+            if(data.type === 'bad') {
+                sfxWrong();
+                el.classList.add('anim-shake');
+                setTimeout(() => { if(el.parentElement) el.remove(); }, 400);
+                return;
+            }
+            
+            sfxPop();
+            addScore(data.pts);
+            
+            // Float text
+            let floatText = document.createElement('div');
+            floatText.innerText = `+${data.pts}`;
+            floatText.style.position = 'absolute';
+            floatText.style.left = el.style.left;
+            floatText.style.top = el.style.top;
+            floatText.style.color = 'var(--success)';
+            floatText.style.fontWeight = 'bold';
+            floatText.style.fontSize = '1.5rem';
+            floatText.style.animation = 'floatUp 1s forwards';
+            floatText.style.pointerEvents = 'none';
+            document.getElementById('game2-area').appendChild(floatText);
+            
+            el.remove();
+        }
+
+
+        // --- GAME 3: Quiz ---
+        const quizData = [
+            { text: "Sebelum makan", icon: "🍽", ans: true },
+            { text: "Selepas menggunakan tandas", icon: "🚽", ans: true },
+            { text: "Selepas batuk atau bersin", icon: "🤧", ans: true },
+            { text: "Selepas bermain di luar", icon: "⚽", ans: true },
+            { text: "Selepas menyentuh haiwan", icon: "🐱", ans: true },
+            { text: "Sebelum tidur", icon: "😴", ans: false, reason: "Tidak perlu, kecuali jika tangan kotor. Memadai dengan mandi." }
+        ];
+        let quizIndex = 0;
+
+        function setupGame3() {
+            switchScreen(4);
+            quizIndex = 0;
+            loadQuizCard();
+        }
+
+        function loadQuizCard() {
+            if(quizIndex >= quizData.length) {
+                setupEnding();
+                return;
+            }
+            let q = quizData[quizIndex];
+            document.getElementById('quiz-img').innerText = q.icon;
+            document.getElementById('quiz-text').innerText = q.text;
+        }
+
+        function checkQuiz(userAns) {
+            let q = quizData[quizIndex];
+            if(userAns === q.ans) {
+                sfxCorrect();
+                addScore(10);
+                let rect = document.getElementById('quiz-card').getBoundingClientRect();
+                createSparkles(rect.left + rect.width/2, rect.top + rect.height/2);
+                showMessage("Betul!", true);
+                quizIndex++;
+                setTimeout(loadQuizCard, 1000);
+            } else {
+                sfxWrong();
+                let card = document.getElementById('quiz-card');
+                card.classList.add('anim-shake');
+                setTimeout(() => card.classList.remove('anim-shake'), 400);
+                
+                let explanation = q.reason ? q.reason : "Fikir semula! Kuman mudah merebak ketika ini.";
+                showMessage(explanation, false);
+            }
+        }
+
+
+        // --- ENDING ---
+        function setupEnding() {
+            // Start with dark theme
+            document.body.classList.add('theme-dark');
+            switchScreen(5);
+            document.getElementById('end-emoji').innerText = '🤢';
+            
+            setTimeout(() => {
+                // Transition to bright theme
+                sfxVictory();
+                document.body.classList.remove('theme-dark');
+                document.getElementById('end-emoji').innerText = '😁';
+                document.getElementById('final-score').innerText = score;
+                fireConfetti();
+            }, 2000);
+        }
+
+        function fireConfetti() {
+            const colors = ['#FF7E67', '#63C5DA', '#66CC66', '#FFD166', '#FF69B4'];
+            for(let i=0; i<100; i++) {
+                let c = document.createElement('div');
+                c.className = 'confetti';
+                c.style.left = Math.random() * 100 + 'vw';
+                c.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                c.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                c.style.animationDelay = Math.random() * 2 + 's';
+                document.body.appendChild(c);
+            }
+        }
+
+    </script>
+</body>
+</html>
